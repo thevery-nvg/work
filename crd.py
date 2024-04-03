@@ -4,14 +4,13 @@ pa1 = r"N(\d{2})(\d{2})(\d{2}\.\d{1,3})"
 pa2 = r"E(\d{2})(\d{2})(\d{2}\.\d{1,3})"
 pb1 = r"N(\d{2})(\d{1,2}\.\d{1,3})"
 pb2 = r"E(\d{2})(\d{1,2}\.\d{1,3})"
-pc_d1 = r"N?(\d+\.\d+)"
+pc_d1 = r"N?(\d{2}\.\d+)"
 pc_d2 = r"E?(\d{2}\.\d+)"
 
 
 def clear_data(data):
-    replace_data = {" ": "", ",": "."}
-    for i in replace_data:
-        data = data.replace(i, replace_data[i])
+    data = re.sub(",", ".", data)
+    data = re.sub(r"[^NE0-9.]", "", data)
     return data
 
 
@@ -33,31 +32,41 @@ def convert_coordinates_full(p: str, data: str):
     return round(lat, 5), round(lon, 5)
 
 
-def convertg_coordinates_full(x: tuple):
-    if len(x) == 2:
-        lat = float(x[0])
-        lon = float(x[1])
-    elif len(x) == 4:
-        lat = float(x[0]) + float(x[1]) / 60
-        lon = float(x[2]) + float(x[3]) / 60
-    elif len(x) == 6:
-        lat = float(x[0]) + float(x[1]) / 60 + float(x[2]) / 3600
-        lon = float(x[3]) + float(x[4]) / 60 + float(x[5]) / 3600
-    return round(lat, 5), round(lon, 5)
+def main():
+    with open("geo_data.txt") as f:
+        line = clear_data(f.readline())
+        out = []
+        if re.fullmatch(f"{pc_d1}{pc_d2}", line):
+            #Если lat lon
+            out.append(convert_coordinates_full(f"{pc_d1}{pc_d2}", clear_data(line)))
+            d = f.readlines()
+            for line in d:
+                line = clear_data(line)
+                out.append(convert_coordinates_full(f"{pc_d1}{pc_d2}", line))
+            return out
+        else:
+            d = clear_data(f.read())
+            if re.search(pa1, d):
+                lats = re.findall(pa1, d)
+                lons = re.findall(pa2, d)
+                for lat, lon in zip(lats, lons):
+                    lat = "N" + "".join(lat)
+                    lon = "E" + "".join(lon)
+                    out.append(convert_coordinates_full(pa1 + pa2, lat + lon))
+            elif re.search(pb1, d):
+                lats = re.findall(pb1, d)
+                lons = re.findall(pb2, d)
+                for lat, lon in zip(lats, lons):
+                    lat = "N" + "".join(lat)
+                    lon = "E" + "".join(lon)
+                    out.append(convert_coordinates_full(pb1 + pb2, lat + lon))
+            else:
+                print("NO MATCHES")
+                return
+            return out
 
 
-# for rand_coord in [clear_data(a), clear_data(b), clear_data(c), clear_data(d)]:
-#     print("found ", convert_coordinates_full({re.fullmatch(pa, rand_coord) is not None: pa,
-#                                               re.fullmatch(pb, rand_coord) is not None: pb,
-#                                               re.fullmatch(pc_d, rand_coord) is not None: pc_d,
-#                                               re.fullmatch(pc_d, rand_coord) is not None: pc_d}.get(True),
-#                                              rand_coord))
-
-with open("geo_data.txt") as f:
-    d = f.readlines()
-d = "".join(d)
-d = clear_data(d)
-d = re.sub(r'[^NE0-9.]', "", d)
-
-for lat, lon in zip(re.findall(pb1, d), re.findall(pb2, d)):
-    print(convertg_coordinates_full(lat + lon))
+if __name__ == '__main__':
+    a = main()
+    for i in a:
+        print(i)
