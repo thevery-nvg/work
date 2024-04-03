@@ -1,0 +1,58 @@
+import re
+def parse_text():
+    pa1 = r"N(\d{2})(\d{1,2})(\d{2}\.\d{1,3})"
+    pa2 = r"E(\d{2})(\d{1,2})(\d{2}\.\d{1,3})"
+    pb1 = r"N(\d{2})(\d{1,2}\.\d{1,3})"
+    pb2 = r"E(\d{2})(\d{1,2}\.\d{1,3})"
+
+
+    def clear_data(data):
+        data = re.sub(",",".",data)
+        data = re.sub(r'[^NE0-9.]', "", data)
+        return data
+
+
+    def convertg_full_lat(x: tuple):
+        if len(x) == 2:
+            lat = float(x[0])+float(x[1])/60
+        elif len(x) == 4:
+            lat = float(x[0]) + float(x[1]) / 60
+            lon = float(x[2]) + float(x[3]) / 60
+        elif len(x) == 6:
+            lat = float(x[0]) + float(x[1]) / 60 + float(x[2]) / 3600
+            lon = float(x[3]) + float(x[4]) / 60 + float(x[5]) / 3600
+        return round(lat, 5)
+
+    def convert_full_lon(x: tuple):
+        if len(x) == 2:
+            lon = float(x[0])+float(x[1])/60
+        elif len(x) == 4:
+            lat = float(x[0]) + float(x[1]) / 60
+            lon = float(x[2]) + float(x[3]) / 60
+        elif len(x) == 6:
+            lat = float(x[0]) + float(x[1]) / 60 + float(x[2]) / 3600
+            lon = float(x[3]) + float(x[4]) / 60 + float(x[5]) / 3600
+        return  round(lon, 5)
+
+
+
+    with open("geo_data.txt") as f:
+        d = clear_data("".join(f.readlines()))
+
+
+
+    if re.search(pa1,d):
+        pattern_a = pa1
+        pattern_b = pa2
+    elif re.search(pb1,d):
+        pattern_a = pb1
+        pattern_b = pb2
+    else:
+        pattern_a = "K"
+        pattern_b = "K"
+    out =[]
+    for lat, lon in zip(re.findall(pattern_a, d), re.findall(pattern_b, d)):
+        out.append((str(convertg_full_lat(lat))+" "+str(convert_full_lon(lon))))
+    print(out)
+    with open("file.txt",'w') as f:
+        f.write("\n".join(out))
