@@ -13,8 +13,9 @@ class Coordinates:
         self.data = None
         self.out = []
 
+
     @staticmethod
-    def clear_data(self, data):
+    def clear_data(data):
         data = re.sub(",", ".", data)
         data = re.sub(r"[^NE0-9.]", "", data)
         return data
@@ -24,13 +25,12 @@ class Coordinates:
             data = f.readlines()
         self.data = data
 
-    @staticmethod
-    def convert_coordinates_full(p: str, data: str):
+    def convert_coordinates_full(self, p: str, data: str):
         lat: float = 0
         lon: float = 0
         if p is None:
             return lat, lon
-        x = re.fullmatch(p, data).groups()
+        x = re.fullmatch(p, self.clear_data(data)).groups()
         if len(x) == 2:
             lat = float(x[0])
             lon = float(x[1])
@@ -47,6 +47,7 @@ class Coordinates:
         if re.fullmatch(f"{self.pc_d1}{self.pc_d2}", line):
             for line in self.data:
                 self.out.append(self.convert_coordinates_full(f"{self.pc_d1}{self.pc_d2}", line))
+            return self.out
         else:
             d = self.clear_data(reduce(lambda x, y: x + y, self.data))
             if re.search(self.pa1, d):
@@ -71,4 +72,5 @@ class Coordinates:
 
 if __name__ == '__main__':
     crd = Coordinates()
-    crd.parse_file()
+    crd.read_data()
+    print(crd.parse_file())
