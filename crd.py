@@ -1,5 +1,6 @@
 import re
 from functools import reduce
+import random
 
 
 class Coordinates:
@@ -13,12 +14,9 @@ class Coordinates:
         self.data = None
         self.out = []
 
-
     @staticmethod
     def clear_data(data):
-        data = re.sub(",", ".", data)
-        data = re.sub(r"[^NE0-9.]", "", data)
-        return data
+        return re.sub(r"[^NE0-9.]", "", data.replace(",", "."))
 
     def read_data(self):
         with open("geo_data.txt") as f:
@@ -70,7 +68,59 @@ class Coordinates:
             return self.out
 
 
+class CreateGPX:
+    def __init__(self):
+        self.height = None
+        self.head = '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+        <gpx xmlns="http://www.topografix.com/GPX/1/1" creator="MapSource 6.16.3" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+
+          <metadata>
+            <link href="http://www.garmin.com">
+              <text>Garmin International</text>
+            </link>
+            <time>2024-01-23T12:24:21Z</time>
+            <bounds maxlat="56.092479145154357" maxlon="55.898553002625704" minlat="53.633718425408006" minlon="51.073859967291355"/>
+          </metadata>'''
+        self.tail = '\n</gpx>'
+        self.output = ""
+
+    def input_height(self):
+        self.height = int(input("Введите высоту: "))
+        if not self.height:
+            self.height = random.randint(35, 88)
+
+    def create_data(self, data: list[tuple]):
+        self.output += self.head
+        for i, coordinates in enumerate(data):
+            lat, lon = coordinates[0], coordinates[1]
+            temp = f'''  <wpt lat="{lat}" lon="{lon}">
+            <ele>{self.height}</ele>
+            <time>2024-01-16T12:56:09Z</time>
+            <name>{i + 1:03}</name>
+            <cmt>30-APR-04 0:57:35</cmt>
+            <desc>30-APR-04 0:57:35</desc>
+            <sym>Flag, Green</sym>
+            <extensions>
+            <gpxx:WaypointExtension xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3">
+            <gpxx:DisplayMode>SymbolAndName</gpxx:DisplayMode>
+            </gpxx:WaypointExtension>
+            </extensions>
+            </wpt>\n'''
+            self.output += temp
+        self.output += self.tail
+
+    def write_gpx(self):
+        with open("coord_fixed.gpx", "w") as f:
+            f.write(self.output)
+
+    def __call__(self, data):
+        self.input_height()
+        self.create_data(data)
+        self.write_gpx()
+
+
 if __name__ == '__main__':
     crd = Coordinates()
+    wrt = CreateGPX()
     crd.read_data()
-    print(crd.parse_file())
+    wrt(crd.parse_file())
